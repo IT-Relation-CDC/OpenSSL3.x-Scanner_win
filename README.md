@@ -6,6 +6,13 @@ An OpenSSL3.x convenience scanner for microsoft windows based on [Velociraptor](
 ## What's this?
 This is a convenience scanner of the affected OpenSSL versions of CVE-2022-3786 and CVE-2022-3602 for microsoft windows.
 
+
+| Will this? |  :white_check_mark::x: |
+| ---------- | ---------------------- |
+| Remediate the vulnerability | :x:   |
+| Find possible indicators of OpenSSL on a windows system? | :white_check_mark: |
+| Find all possible variants of OpenSSL even if it's heavily modified from the vendor side | :x: |
+
 ## How to use.
 1. [Download](https://github.com/IT-Relation-CDC/OpenSSL3.x-Scanner_win/archive/refs/heads/main.zip) or clone this repository
 2. Run either "run_64bit.ps1" or "run_32bit.ps1" by right clicking the file and choosing "Run with powershell"
