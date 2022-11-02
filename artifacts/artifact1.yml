@@ -1,0 +1,50 @@
+name: Custom.Generic.Detection.OpenSSL_3_xCriticalVuln_Indicators
+author: IT Relation CDC
+description: |
+  This artifact will use yara to search for the affected Openssl 3.x version strings in binaries,
+  excluding not vulnerable and forked libressl and boringssl, furthermore it has a regex that will try and match
+  custom compiled vendor versions of OpenSSL ie. CiscoSSL 3.x.x
+  
+parameters:
+  - name: UploadHits
+    type: bool
+  - name: YaraRule
+    type: yara
+    description: Final Yara option and the default if no other options provided.
+    default: |
+        rule vulnerable_openssl_version {
+            strings:
+                $re1 = /[a-zA-Z]{,50}SSL\s3\.[0-6]{1}\.[0-9]{1}[a-z]{,1}/
+                $nre1 = /LibreSSL/
+                $nre2 = /BoringSSL/
+        condition:
+            $re1 and 
+            not any of ($nre*)
+        }
+sources:
+  - query: |
+      -- find exe's and dll's
+      LET files = SELECT FullPath, Name, Size, Mtime, Atime, Ctime, Btime
+        FROM glob(globs=["**/*.exe","**/*.dll"],nosymlink='True')
+        WHERE NOT IsDir AND NOT IsLink
+          
+      -- scan files with yara and report on hits
+      LET hits = SELECT * FROM foreach(row=files,
+            query={
+                SELECT
+                    FileName as FullPath,
+                    File.Size AS Size,
+                    str(str=String.Data) AS HitContext,
+                    String.Offset AS HitOffset,
+                    Mtime, Atime, Ctime, Btime
+                FROM yara(rules=YaraRule,files=FullPath)
+                LIMIT 1
+            })
+      -- upload files that have hit
+      LET upload_hits=SELECT *,
+            upload(file=FullPath) AS Upload
+        FROM hits
+      -- return rows
+      SELECT * FROM if(condition=UploadHits,
+        then=upload_hits,
+        else=hits)
